@@ -1,0 +1,74 @@
+[
+  {
+    "id": "C1",
+    "alert": "【P1】pay-service 支付成功率从 99.2% 跌到 81%，P99 延迟 3.2 秒，网关出现大量 504",
+    "expect": ["渠道", "超时", "第三方", "timed out"],
+    "note": "第三方渠道抖动，应指向渠道而非本地代码"
+  },
+  {
+    "id": "C2",
+    "alert": "【P0】order-service 大面积超时，日志出现 HikariPool 连接不可用，但 CPU 只有 44%",
+    "expect": ["连接池", "慢查询", "慢 SQL", "索引", "Hikari"],
+    "note": "连接池打满，根因多半是慢 SQL"
+  },
+  {
+    "id": "C3",
+    "alert": "【P0】pay-service 02:11 开始出现 NullPointerException，02:05 刚发过版",
+    "expect": ["发版", "回滚", "NullPointer", "配置"],
+    "note": "发版引入的空指针，处置应是回滚"
+  },
+  {
+    "id": "C4",
+    "alert": "【P1】order-service 缓存命中率从 95% 掉到 18%，数据库 QPS 翻了 10 倍",
+    "expect": ["缓存", "雪崩", "命中率", "TTL", "击穿"],
+    "note": "缓存雪崩"
+  },
+  {
+    "id": "C5",
+    "alert": "【P2】inventory-service 日志停止输出，磁盘使用率 100%，日志文件没有轮转",
+    "expect": ["磁盘", "No space", "日志", "轮转", "logrotate"],
+    "note": "磁盘写满，日志未轮转"
+  },
+  {
+    "id": "C6",
+    "alert": "【P1】user-service 大量连接失败，报 Too many open files，句柄数 65535/65535",
+    "expect": ["句柄", "open files", "ulimit", "泄漏", "连接"],
+    "note": "句柄耗尽"
+  },
+  {
+    "id": "C7",
+    "alert": "【P2】网关 429 激增，但整体流量没有上涨，错误集中在少数 IP",
+    "expect": ["限流", "429", "阈值", "IP", "黑名单"],
+    "note": "限流阈值过低或单 IP 刷接口"
+  },
+  {
+    "id": "C8",
+    "alert": "【P1】支付渠道熔断器一直处于 open 状态，错误率已经回落但请求仍然被拦截",
+    "expect": ["熔断", "circuit breaker", "半开", "重置"],
+    "note": "熔断器卡住未恢复"
+  },
+  {
+    "id": "C9",
+    "alert": "【P3】search-service 出现大量不存在商品 ID 的查询，数据库压力上升",
+    "expect": ["穿透", "布隆", "不存在", "空值"],
+    "note": "缓存穿透"
+  },
+  {
+    "id": "C10",
+    "alert": "【P2】order-service 同一笔订单被重复处理 4 次，客户端有重试",
+    "expect": ["重试", "幂等", "重复", "退避"],
+    "note": "重试风暴，需要幂等 + 退避"
+  },
+  {
+    "id": "C11",
+    "alert": "【P1】order-service P99 涨到 8.4 秒，有一条查询走了全表扫描",
+    "expect": ["慢查询", "索引", "全表", "SQL"],
+    "note": "慢 SQL 缺索引"
+  },
+  {
+    "id": "C12",
+    "alert": "【P0】pay-service 和 gateway 同时异常，02:05 有发版，同时配置中心改了渠道开关",
+    "expect": ["发版", "配置", "channel", "回滚", "开关"],
+    "note": "发版 + 配置变更叠加"
+  }
+]

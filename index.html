@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能 OnCall Agent</title>
+<style>
+:root{
+  --fg:#1b1b1b;--bg:#fff;--soft:#f7f8fa;--line:#e3e6ea;--muted:#6b7280;
+  --accent:#1a5fb4;--accent2:#7c3aed;--ok:#067647;--warn:#b45309;--err:#b42318;
+}
+@media (prefers-color-scheme:dark){
+  :root{--fg:#e8eaed;--bg:#15171a;--soft:#1c1f23;--line:#2e3339;--muted:#9aa0a6;
+        --accent:#7fb4ff;--accent2:#b794ff;--ok:#7ee2a8;--warn:#fbbf24;--err:#ff8a80}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:26px 18px 70px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo{width:34px;height:34px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2))}
+h1{font-size:20px;margin:0;letter-spacing:.3px}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 20px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:9px 15px;border:0;background:transparent;color:var(--muted);font-size:14px;
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+.tab.on{color:var(--fg);border-bottom-color:var(--accent);font-weight:600}
+.panel{display:none}.panel.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px;background:var(--bg)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px}
+textarea,input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;
+  background:transparent;color:var(--fg);font:13.5px/1.65 ui-monospace,Consolas,"Microsoft YaHei",monospace;
+  resize:vertical;font-family:inherit}
+textarea{height:120px}
+textarea:focus,input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,95,180,.12)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font-family:inherit;font-size:14px;padding:9px 18px;border-radius:9px;border:0;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;transition:.18s}
+button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(26,95,180,.22)}
+button:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:13px;padding:7px 13px}
+button.ghost:hover{border-color:var(--accent);color:var(--accent);transform:none;box-shadow:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:20px;
+  padding:4px 10px;cursor:pointer;background:var(--soft)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.badge{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:20px;
+  border:1px solid var(--line);color:var(--muted);margin-right:6px}
+.badge.p0{color:#fff;background:var(--err);border-color:transparent}
+.badge.p1{color:#fff;background:var(--warn);border-color:transparent}
+.badge.p2{color:#fff;background:var(--accent);border-color:transparent}
+h3{font-size:13.5px;margin:0 0 9px;color:var(--muted);font-weight:600;letter-spacing:.4px}
+.step{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.step:last-child{border-bottom:0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);margin-top:8px;flex:none}
+.dot.bad{background:var(--err)}
+.step .name{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--accent)}
+.step .args{font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+.step .why{font-size:12.5px;color:var(--muted);margin-top:2px}
+.step details summary{cursor:pointer;font-size:12px;color:var(--accent);margin-top:3px}
+.step pre{white-space:pre-wrap;font-size:11.5px;line-height:1.5;color:var(--muted);background:rgba(127,127,127,.09);padding:8px 10px;border-radius:6px;max-height:180px;overflow:auto;margin:6px 0 0}
+.answer{white-space:pre-wrap;font-size:14.5px;line-height:1.85}
+.src{font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px;margin:6px 0}
+.list{margin:0;padding-left:20px}.list li{margin:6px 0;font-size:14px}
+.err{border:1px solid var(--err);color:var(--err);border-radius:9px;padding:10px 14px;font-size:13.5px}
+.msgs{max-height:380px;overflow:auto;padding:4px 2px}
+.msg{margin:0 0 12px;display:flex;gap:9px}
+.msg .who{font-size:11.5px;color:var(--muted);flex:none;width:34px;padding-top:3px}
+.msg .body{font-size:14px;line-height:1.8;white-space:pre-wrap}
+.msg.me .body{color:var(--accent)}
+.meta{font-size:12px;color:var(--muted);margin-top:10px}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));
+  background-size:200% 100%;animation:sweep 1.4s infinite;margin:8px 0}
+@keyframes sweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (max-width:640px){.wrap{padding:18px 14px 50px}h1{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo"></div><h1>智能 OnCall Agent</h1></header>
+  <p class="sub">三个 Agent：知识库（RAG）、对话（多轮）、运维（Plan-Execute-Replan）</p>
+
+  <div class="tabs">
+    <button class="tab on" data-t="kb">知识库问答</button>
+    <button class="tab" data-t="chat">对话</button>
+    <button class="tab" data-t="triage">故障排查</button>
+    <button class="tab" data-t="stats">运行状态</button>
+  </div>
+
+  <!-- 知识库 -->
+  <section class="panel on" id="p-kb">
+    <div class="card">
+      <label>问一个运维问题（会先检索手册，再回答并给出来源）</label>
+      <textarea id="kb-q" placeholder="例如：支付服务一直在超时，应该按什么顺序排查？"></textarea>
+      <div class="chips">
+        <span class="chip" data-q="支付服务一直在超时，应该按什么顺序排查？">支付超时</span>
+        <span class="chip" data-q="数据库连接池被打满了怎么办？">连接池</span>
+        <span class="chip" data-q="发版之后错误率上升，要不要先回滚？">发版回滚</span>
+        <span class="chip" data-q="缓存命中率突然掉了，数据库压力变大">缓存雪崩</span>
+      </div>
+      <div class="row"><button id="kb-btn">提问</button></div>
+    </div>
+    <div id="kb-out"></div>
+  </section>
+
+  <!-- 对话 -->
+  <section class="panel" id="p-chat">
+    <div class="card">
+      <div class="msgs" id="chat-msgs"></div>
+      <label style="margin-top:10px">你：</label>
+      <input type="text" id="chat-q" placeholder="例如：刚才那个故障现在还在吗？">
+      <div class="row">
+        <button id="chat-btn">发送</button>
+        <button class="ghost" id="chat-reset">换个会话</button>
+        <span class="meta" id="chat-sid"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 排障 -->
+  <section class="panel" id="p-triage">
+    <div class="card">
+      <label>贴一条告警，Agent 会先列排查计划，再逐步执行（Plan → Execute → Replan）</label>
+      <textarea id="tr-a" placeholder="例如：【P1】pay-service 支付成功率跌到 81%，P99 3.2 秒，网关大量 504"></textarea>
+      <div class="chips">
+        <span class="chip" data-a="【P1】pay-service 支付成功率从 99.2% 跌到 81%，P99 延迟 3.2 秒，网关出现大量 504">支付超时</span>
+        <span class="chip" data-a="【P0】order-service 大面积超时，日志出现 HikariPool 连接不可用，但 CPU 只有 44%">连接池打满</span>
+        <span class="chip" data-a="【P2】inventory-service 日志停止输出，磁盘使用率 100%">磁盘写满</span>
+        <span class="chip" data-a="【P1】user-service 大量连接失败，报 Too many open files">句柄耗尽</span>
+      </div>
+      <div class="row"><button id="tr-btn">开始排查</button></div>
+    </div>
+    <div id="tr-out"></div>
+  </section>
+
+  <!-- 状态 -->
+  <section class="panel" id="p-stats">
+    <div class="card"><h3>运行状态</h3><div id="st-body" class="meta">加载中…</div>
+      <div class="row"><button class="ghost" id="st-btn">刷新</button></div></div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* 标签切换 */
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.t));
+  if (b.dataset.t === 'stats') loadStats();
+});
+
+/* ---------- 知识库 ---------- */
+document.querySelectorAll('.chip[data-q]').forEach(c => c.onclick = () => {
+  $('#kb-q').value = c.dataset.q; $('#kb-btn').click();
+});
+
+$('#kb-btn').onclick = async () => {
+  const q = $('#kb-q').value.trim();
+  if (q.length < 2) { $('#kb-out').innerHTML = '<div class="err">问题太短了</div>'; return; }
+  const btn = $('#kb-btn'); btn.disabled = true; btn.textContent = '检索中…';
+  $('#kb-out').innerHTML = '<div class="card"><div class="skel"></div><div class="skel"></div><div class="skel" style="width:60%"></div></div>';
+  try {
+    const r = await fetch('/kb/ask', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: q})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || '请求失败');
+    const src = (d.sources || []).map(s =>
+      `<div class="src">${esc(s.doc)} · ${esc(s.section)}　相关度 ${s.score}</div>`).join('');
+    $('#kb-out').innerHTML = `
+      <div class="card"><h3>回答</h3><div class="answer">${esc(d.answer)}</div></div>
+      <div class="card"><h3>引用来源（${d.sources.length} 条 · ${esc(d.retrieval.mode)}）</h3>${src || '<div class="meta">无</div>'}</div>
+      <div class="meta">成本 ${d.cost} 元 · 耗时 ${d.latency} 秒</div>`;
+  } catch (e) {
+    $('#kb-out').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+  } finally { btn.disabled = false; btn.textContent = '提问'; }
+};
+
+/* ---------- 对话 ---------- */
+let sid = 'web-' + Math.random().toString(36).slice(2, 8);
+$('#chat-sid').textContent = '会话 ' + sid;
+
+function pushMsg(who, text, me) {
+  const d = document.createElement('div');
+  d.className = 'msg' + (me ? ' me' : '');
+  d.innerHTML = `<div class="who">${who}</div><div class="body">${esc(text)}</div>`;
+  $('#chat-msgs').appendChild(d);
+  $('#chat-msgs').scrollTop = 1e6;
+  return d.querySelector('.body');
+}
+
+$('#chat-reset').onclick = () => {
+  sid = 'web-' + Math.random().toString(36).slice(2, 8);
+  $('#chat-sid').textContent = '会话 ' + sid;
+  $('#chat-msgs').innerHTML = '';
+};
+
+$('#chat-btn').onclick = async () => {
+  const q = $('#chat-q').value.trim();
+  if (!q) return;
+  $('#chat-q').value = '';
+  pushMsg('你', q, true);
+  const body = pushMsg('AI', '', false);
+  const btn = $('#chat-btn'); btn.disabled = true;
+  const tools = [];
+  try {
+    const url = `/chat/stream?session_id=${encodeURIComponent(sid)}&question=${encodeURIComponent(q)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.detail || `请求失败（${res.status}）`);
+    }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const p of parts) {
+        const line = p.trim();
+        if (!line.startsWith('data:')) continue;
+        const raw = line.slice(5).trim();
+        if (raw === '[DONE]') continue;
+        const ev = JSON.parse(raw);
+        if (ev.stage === 'delta') { body.textContent += ev.text; $('#chat-msgs').scrollTop = 1e6; }
+        if (ev.stage === 'tool') {
+          tools.push(ev.name);
+          let tl = body.nextElementSibling;
+          if (!tl || !tl.classList.contains('tooline')) {
+            tl = document.createElement('div');
+            tl.className = 'meta tooline';
+            body.after(tl);
+          }
+          tl.textContent = '🔧 已查询：' + tools.join(' → ');
+          $('#chat-msgs').scrollTop = 1e6;
+        }
+        if (ev.stage === 'done') {
+          body.textContent = ev.payload.answer;
+          body.insertAdjacentHTML('afterend',
+            `<div class="meta">成本 ${ev.payload.cost} 元 · 耗时 ${ev.payload.latency} 秒</div>`);
+        }
+        if (ev.stage === 'error') { body.textContent = '出错了：' + ev.message; }
+      }
+    }
+  } catch (e) {
+    body.textContent = '出错了：' + e.message;
+  } finally { btn.disabled = false; }
+};
+$('#chat-q').addEventListener('keydown', e => { if (e.key === 'Enter') $('#chat-btn').click(); });
+
+/* ---------- 排障 ---------- */
+document.querySelectorAll('.chip[data-a]').forEach(c => c.onclick = () => {
+  $('#tr-a').value = c.dataset.a; $('#tr-btn').click();
+});
+
+$('#tr-btn').onclick = () => {
+  const a = $('#tr-a').value.trim();
+  if (a.length < 4) { $('#tr-out').innerHTML = '<div class="err">告警太短了</div>'; return; }
+  const btn = $('#tr-btn'), out = $('#tr-out');
+  btn.disabled = true; btn.textContent = '排查中…';
+  out.innerHTML = '<div class="card"><h3>排查过程 <span class="meta">· 实时</span></h3><div id="tr-log"></div></div>';
+  const log = $('#tr-log');
+  const add = (html) => log.insertAdjacentHTML('beforeend', html);
+  const finish = () => { btn.disabled = false; btn.textContent = '开始排查'; };
+
+  const es = new EventSource('/triage/stream?alert=' + encodeURIComponent(a));
+  let settled = false;
+  const stop = () => { settled = true; es.close(); finish(); };
+
+  es.onmessage = (ev) => {
+    if (ev.data === '[DONE]') { stop(); return; }
+    let o; try { o = JSON.parse(ev.data); } catch { return; }
+
+    if (o.stage === 'planning') {
+      add(`<div class="step"><div class="dot"></div><div style="flex:1"><span class="name">生成排查计划…</span></div></div>`);
+    } else if (o.stage === 'plan') {
+      const steps = (o.steps || []).map((s, i) =>
+        `<div class="why">${i + 1}. <b>${esc(s.tool)}</b> ${esc(JSON.stringify(s.args || {}))} — ${esc(s.why || '')}</div>`).join('');
+      add(`<div class="step"><div class="dot"></div><div style="flex:1">
+        <span class="name">第 ${o.round} 轮计划</span>
+        <div class="args">假设：${esc(o.hypothesis || '')}</div>${steps}</div></div>`);
+    } else if (o.stage === 'tool') {
+      add(`<div class="step"><div class="dot ${o.ok ? '' : 'bad'}"></div><div style="flex:1">
+        <span class="name">${esc(o.tool)}</span> <span class="meta">第 ${o.index}/${o.total} 步</span>
+        <div class="args">${esc(JSON.stringify(o.args || {}))}</div>
+        <details><summary class="why">看结果</summary><pre>${esc(o.preview || '')}</pre></details></div></div>`);
+    } else if (o.stage === 'replan') {
+      add(`<div class="step"><div class="dot bad"></div><div style="flex:1"><span class="name">重新规划</span><div class="why">${esc(o.note || '')}</div></div></div>`);
+    } else if (o.stage === 'concluding') {
+      add(`<div class="step"><div class="dot"></div><div style="flex:1"><span class="name">证据齐了，正在下结论…</span></div></div>`);
+    } else if (o.stage === 'error') {
+      add(`<div class="step"><div class="dot bad"></div><div style="flex:1"><span class="name">出错</span><div class="why">${esc(o.message)}</div></div></div>`);
+      stop();
+    } else if (o.stage === 'done') {
+      stop();
+      renderTriage(o.payload);
+    }
+  };
+  es.onerror = () => {
+    if (!settled) {
+      add(`<div class="step"><div class="dot bad"></div><div style="flex:1"><span class="name">连接中断</span></div></div>`);
+      stop();
+    }
+  };
+};
+
+function renderTriage(d) {
+  const res = d.result || {};
+  const sev = (res.severity || 'P2').toLowerCase();
+  const rounds = (d.plan_rounds || []).map(r => {
+    const steps = (r.steps || []).map(s => `
+      <div class="step">
+        <div class="dot ${s.ok ? '' : 'bad'}"></div>
+        <div style="flex:1">
+          <span class="name">${esc(s.tool)}</span>
+          <div class="args">${esc(JSON.stringify(s.args))}</div>
+          <div class="why">${esc(s.why || '')}${s.ok ? '' : '（这一步失败了）'}</div>
+        </div>
+      </div>`).join('');
+    return `<div class="card">
+      <h3>第 ${r.round} 轮计划 ${r.replanned ? '· 重规划' : ''}</h3>
+      <div class="meta" style="margin:0 0 8px">假设：${esc(r.hypothesis)}</div>
+      ${steps}</div>`;
+  }).join('');
+
+  const ev = (d.evidence || []).map(e =>
+    `<div class="step"><div class="dot"></div><div style="flex:1">
+      <span class="name">${esc(e.tool)}</span>
+      <div class="why">${esc(e.preview)}</div></div></div>`).join('');
+
+  const actions = (res.actions || []).map(x => `<li>${esc(x)}</li>`).join('');
+  const summary = (res.evidence_summary || []).map(x => `<li>${esc(x)}</li>`).join('');
+  const conf = typeof res.confidence === 'number' ? (res.confidence * 100).toFixed(0) + '%' : '—';
+
+  $('#tr-out').innerHTML = `
+    <div class="card">
+      <div><span class="badge ${sev}">${esc(res.severity || '')}</span>
+        <span class="badge">置信度 ${conf}</span>
+        <span class="badge">${d.replanned ? '已尝试重规划' : '单轮排查'}</span></div>
+      <div class="answer" style="margin-top:10px"><b>根因：</b>${esc(res.root_cause || '未给出')}</div>
+    </div>
+    ${rounds}
+    <div class="card"><h3>执行到的证据</h3>${ev || '<div class="meta">无</div>'}</div>
+    <div class="card"><h3>证据说明</h3><ul class="list">${summary}</ul></div>
+    <div class="card"><h3>处置动作</h3><ul class="list">${actions}</ul></div>
+    <div class="meta">成本 ${d.cost} 元 · 耗时 ${d.latency} 秒</div>`;
+}
+
+/* ---------- 状态 ---------- */
+async function loadStats() {
+  try {
+    const r = await fetch('/stats');
+    const d = await r.json();
+    $('#st-body').innerHTML = `
+      <div>模型：<b>${esc(d.model)}</b></div>
+      <div>检索：<b>${esc(d.retrieval.mode)}</b> · 手册切块 ${d.retrieval.chunks} 段</div>
+      <div>今日已花：<b>${d.today_cost}</b> 元 / 上限 ${d.daily_budget} 元（剩余 ${d.budget_left}）</div>
+      <div>缓存条目：${d.cache_size}</div>`;
+  } catch (e) {
+    $('#st-body').textContent = '读取失败：' + e.message;
+  }
+}
+$('#st-btn').onclick = loadStats;
+</script>
+</body>
+</html>

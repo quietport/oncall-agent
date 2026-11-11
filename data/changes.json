@@ -1,0 +1,7 @@
+[
+  {"ts": "2026-10-31 01:58:00", "service": "inventory-service", "version": "v1.9.2", "author": "演示人员01", "note": "调整库存扣减顺序，未改日志配置"},
+  {"ts": "2026-10-31 02:05:12", "service": "pay-service", "version": "v2.14.3", "author": "演示人员02", "note": "支付路由改造：新增 channelConfig 注入"},
+  {"ts": "2026-10-31 02:05:40", "service": "pay-service", "version": "v2.14.3", "author": "演示人员02", "note": "配置中心同步：payment.channel.b.enabled=true"},
+  {"ts": "2026-10-30 23:40:00", "service": "user-service", "version": "v3.2.0", "author": "演示人员03", "note": "增加长连接保活逻辑"},
+  {"ts": "2026-10-30 22:10:00", "service": "gateway", "version": "v5.1.7", "author": "演示人员04", "note": "限流阈值从 200 QPS 调整为 50 QPS（单 IP）"}
+]

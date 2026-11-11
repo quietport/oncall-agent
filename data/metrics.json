@@ -1,0 +1,77 @@
+{
+  "updated_at": "2026-10-31 02:24:00",
+  "services": {
+    "pay-service": {
+      "p99_ms": 3260,
+      "p50_ms": 410,
+      "qps": 620,
+      "error_rate": 0.187,
+      "cpu": 0.31,
+      "memory": 0.52,
+      "db_conn_used": 41,
+      "db_conn_max": 100,
+      "cache_hit_ratio": 0.93,
+      "note": "P99 在 02:12 之后阶梯上涨，CPU 不高"
+    },
+    "order-service": {
+      "p99_ms": 8420,
+      "p50_ms": 260,
+      "qps": 880,
+      "error_rate": 0.224,
+      "cpu": 0.44,
+      "memory": 0.61,
+      "db_conn_used": 100,
+      "db_conn_max": 100,
+      "cache_hit_ratio": 0.184,
+      "note": "连接池满，缓存命中率断崖下跌"
+    },
+    "inventory-service": {
+      "p99_ms": 180,
+      "p50_ms": 45,
+      "qps": 310,
+      "error_rate": 0.032,
+      "cpu": 0.22,
+      "memory": 0.38,
+      "db_conn_used": 12,
+      "db_conn_max": 50,
+      "cache_hit_ratio": 0.88,
+      "disk_usage": 1.0,
+      "note": "磁盘 100%，日志写不进去"
+    },
+    "user-service": {
+      "p99_ms": 620,
+      "p50_ms": 90,
+      "qps": 1500,
+      "error_rate": 0.141,
+      "cpu": 0.27,
+      "memory": 0.46,
+      "db_conn_used": 30,
+      "db_conn_max": 80,
+      "cache_hit_ratio": 0.91,
+      "open_files": 65535,
+      "open_files_max": 65535,
+      "note": "句柄打满"
+    },
+    "gateway": {
+      "p99_ms": 980,
+      "p50_ms": 120,
+      "qps": 4200,
+      "error_rate": 0.096,
+      "cpu": 0.18,
+      "memory": 0.33,
+      "status_429": 380,
+      "status_504": 214,
+      "note": "429 集中在单个 IP，504 来自 pay-service"
+    },
+    "search-service": {
+      "p99_ms": 310,
+      "p50_ms": 60,
+      "qps": 2600,
+      "error_rate": 0.008,
+      "cpu": 0.35,
+      "memory": 0.41,
+      "cache_hit_ratio": 0.62,
+      "note": "大量不存在的 product_id 查询，缓存不命中"
+    }
+  }
+}
